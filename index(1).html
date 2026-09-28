@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Adapt'Dys</title>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --encre: #1F2933;
+    --nuit: #1F3A5F;
+    --gris: #52606D;
+    --trait: #D5DCE5;
+    --fond: #F6F8FB;
+    --carte: #FFFFFF;
+    --bleu: #DCEBFA; --violet: #ECE4F8; --vert: #DDF2E3;
+    --orange: #FDE7D6; --rose: #FADDE1; --jaune: #FFF4C2;
+    --rayon: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fond); color: var(--encre); }
+  body {
+    font-family: 'Atkinson Hyperlegible', Verdana, Arial, sans-serif;
+    font-size: 17px; line-height: 1.5;
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+  }
+  .bande { display: flex; height: 8px; }
+  .bande span { flex: 1; }
+  main { max-width: 560px; margin: 0 auto; padding: 18px 16px 40px; }
+  h1 { font-size: 1.6rem; margin: 6px 0 2px; color: var(--nuit); }
+  .intro { color: var(--gris); margin: 0 0 20px; }
+
+  .etape { background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon);
+           padding: 16px; margin-bottom: 14px; }
+  .etape h2 { font-size: 1.1rem; margin: 0 0 12px; display: flex; gap: 10px; align-items: center; }
+  .num { width: 28px; height: 28px; border-radius: 50%; background: var(--nuit); color: #fff;
+         display: inline-flex; align-items: center; justify-content: center; font-size: .95rem; flex: none; }
+
+  .boutons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  button, .btn {
+    font: inherit; font-weight: 700; border-radius: 12px; padding: 14px 12px; cursor: pointer;
+    border: 2px solid var(--nuit); background: #fff; color: var(--nuit); text-align: center;
+    text-decoration: none; display: block; width: 100%;
+  }
+  button.principal, .btn.principal { background: var(--nuit); color: #fff; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid #7FA7D9; outline-offset: 2px;
+  }
+  input[type=file] { display: none; }
+
+  .vignettes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .vignette { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--trait);
+              aspect-ratio: 3/4; background: #eef1f5; }
+  .vignette img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vignette .page { position: absolute; left: 6px; top: 6px; background: var(--nuit); color: #fff;
+                    font-size: .8rem; padding: 1px 8px; border-radius: 20px; }
+  .vignette .actions { position: absolute; right: 4px; bottom: 4px; display: flex; gap: 4px; }
+  .vignette .actions button { width: 34px; height: 34px; padding: 0; border-radius: 8px; font-size: .95rem;
+                              border-width: 1px; background: rgba(255,255,255,.95); }
+  .vide { color: var(--gris); font-size: .95rem; margin: 12px 0 0; }
+
+  label { display: block; font-weight: 700; margin: 12px 0 6px; }
+  label:first-child { margin-top: 0; }
+  select, input[type=text], input[type=password], textarea {
+    font: inherit; width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid var(--trait); background: #fff;
+    color: var(--encre);
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  .aide { font-size: .9rem; color: var(--gris); margin: 4px 0 0; }
+
+  .attente { text-align: center; padding: 28px 16px; }
+  .rond { width: 44px; height: 44px; border: 5px solid var(--bleu); border-top-color: var(--nuit);
+          border-radius: 50%; margin: 0 auto 14px; animation: tourne 1s linear infinite; }
+  @keyframes tourne { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .rond { animation-duration: 3s; } }
+
+  .resultat h2 { margin-top: 0; }
+  .pile { display: grid; gap: 10px; margin: 14px 0; }
+  .signal { border-radius: 12px; padding: 12px 14px; margin-top: 12px; }
+  .signal.ok { background: var(--vert); }
+  .signal.alerte { background: var(--rose); }
+  .signal.info { background: var(--jaune); }
+  .signal ul { margin: 6px 0 0; padding-left: 20px; }
+  .erreur { background: var(--rose); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+  .cache { display: none !important; }
+  .lien-discret { background: none; border: none; color: var(--gris); font-weight: 400; text-decoration: underline;
+                  padding: 8px; width: auto; margin: 10px auto 0; }
+</style>
+</head>
+<body>
+<div class="bande" aria-hidden="true">
+  <span style="background:#DCEBFA"></span><span style="background:#ECE4F8"></span><span style="background:#DDF2E3"></span>
+  <span style="background:#FDE7D6"></span><span style="background:#FADDE1"></span><span style="background:#FFF4C2"></span>
+</div>
+
+<main>
+  <h1>Adapt'Dys</h1>
+  <p class="intro">Photographie un cours ou un devoir : tu reçois une version adaptée TDAH + multidys, prête à imprimer.</p>
+
+  <div id="erreur" class="erreur cache" role="alert"></div>
+
+  <!-- Code d'accès -->
+  <section id="ecranCode" class="etape cache">
+    <h2>Code d'accès</h2>
+    <label for="code">Saisis le code une seule fois : il reste mémorisé sur ce téléphone.</label>
+    <input id="code" type="password" inputmode="numeric" autocomplete="off">
+    <div style="margin-top:12px"><button class="principal" id="btnCode">Valider</button></div>
+  </section>
+
+  <!-- Formulaire -->
+  <section id="ecranForm" class="cache">
+    <div class="etape">
+      <h2><span class="num">1</span> Les pages du document</h2>
+      <div class="boutons">
+        <button class="principal" id="btnPhoto">📷 Prendre une photo</button>
+        <button id="btnGalerie">🖼️ Choisir des images</button>
+      </div>
+      <input id="inPhoto" type="file" accept="image/*" capture="environment">
+      <input id="inGalerie" type="file" accept="image/*" multiple>
+      <div id="vignettes" class="vignettes"></div>
+      <p id="vide" class="vide">Aucune page pour l'instant. Prends les pages dans l'ordre, bien à plat et éclairées.</p>
+    </div>
+
+    <div class="etape">
+      <h2><span class="num">2</span> Précisions (facultatif)</h2>
+      <label for="type">Type de document</label>
+      <select id="type">
+        <option value="auto">Détection automatique</option>
+        <option value="cours">Cours / fiche à apprendre</option>
+        <option value="devoir">Devoir / exercices (sans réponses)</option>
+      </select>
+      <label for="titre">Titre à afficher</label>
+      <input id="titre" type="text" placeholder="Laisser vide pour le titre du document">
+      <label for="remarque">Remarque pour l'adaptation</label>
+      <textarea id="remarque" placeholder="Ex. : cours de maths de 2de, garder les notations du prof"></textarea>
+      <p class="aide">N'indique jamais le nom de l'élève ici.</p>
+    </div>
+
+    <div class="etape">
+      <h2><span class="num">3</span> Adapter</h2>
+      <button class="principal" id="btnAdapter" disabled>Adapter le document</button>
+      <p class="aide">Compte environ 30 secondes à 1 minute.</p>
+    </div>
+  </section>
+
+  <!-- Attente -->
+  <section id="ecranAttente" class="etape attente cache" aria-live="polite">
+    <div class="rond" aria-hidden="true"></div>
+    <b>Adaptation en cours…</b>
+    <p class="aide" id="chrono">0 s</p>
+    <p class="aide">Garde cette page ouverte.</p>
+  </section>
+
+  <!-- Résultat -->
+  <section id="ecranResultat" class="etape resultat cache" aria-live="polite">
+    <h2 id="resTitre"></h2>
+    <div class="pile">
+      <button class="principal" id="btnTelecharger">⬇️ Télécharger le PDF</button>
+      <button id="btnWord">📝 Télécharger en Word (modifiable)</button>
+      <a class="btn" id="lienDoc" target="_blank" rel="noopener">✏️ Corriger dans Google Docs</a>
+      <a class="btn" id="lienPdf" target="_blank" rel="noopener">📁 Voir le PDF dans Drive</a>
+    </div>
+    <div id="verif"></div>
+    <div id="illisible"></div>
+    <p class="aide">Pour modifier avant d'imprimer : télécharge la version Word, corrige-la, puis imprime-la.</p>
+    <button class="principal" id="btnNouveau" style="margin-top:12px">Adapter un autre document</button>
+  </section>
+
+  <button class="lien-discret cache" id="btnOubli">Changer de code d'accès</button>
+</main>
+
+<script>
+  const API = 'https://script.google.com/macros/s/AKfycbwsF8V-3LhCoe1IHBBGSTEEqPe4Aslpr0DOlHCFRP0pUb9ykEyHGx8y6_dnCd5Y_2L5/exec';
+
+  async function appeler(corps) {
+    let rep;
+    try {
+      const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(corps) });
+      rep = await r.json();
+    } catch (e) {
+      throw new Error('Connexion au serveur impossible. Vérifie ta connexion internet et réessaie.');
+    }
+    if (!rep.ok) throw new Error(rep.erreur || 'Erreur inconnue.');
+    return rep.resultat;
+  }
+
+  const CLE_STOCKAGE = 'adaptdys-code';
+  const MAX_PAGES = 8;
+  const COTE_MAX = 2000;
+  let pages = [];          // { url, data }
+  let codeAcces = '';
+  let dernierPdf = null;
+  let minuteur = null;
+
+  const $ = id => document.getElementById(id);
+  const montrer = (...ids) => ['ecranCode','ecranForm','ecranAttente','ecranResultat']
+    .forEach(e => $(e).classList.toggle('cache', !ids.includes(e)));
+
+  function lireCode() { try { return localStorage.getItem(CLE_STOCKAGE) || ''; } catch (e) { return ''; } }
+  function ecrireCode(c) { try { c ? localStorage.setItem(CLE_STOCKAGE, c) : localStorage.removeItem(CLE_STOCKAGE); } catch (e) {} }
+
+  function erreur(msg) {
+    $('erreur').textContent = msg || '';
+    $('erreur').classList.toggle('cache', !msg);
+    if (msg) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ── Code d'accès ── */
+  function demarrer() {
+    codeAcces = lireCode();
+    if (!codeAcces) { montrer('ecranCode'); return; }
+    montrer('ecranForm');
+    $('btnOubli').classList.remove('cache');
+  }
+
+  $('btnCode').onclick = () => {
+    const c = $('code').value.trim();
+    if (!c) return;
+    $('btnCode').disabled = true;
+    appeler({ action: 'verifier', code: c })
+      .then(() => { ecrireCode(c); erreur(''); $('btnCode').disabled = false; demarrer(); })
+      .catch(e => { $('btnCode').disabled = false; erreur(e.message); });
+  };
+  $('btnOubli').onclick = () => { ecrireCode(''); $('code').value = ''; $('btnOubli').classList.add('cache'); demarrer(); };
+
+  /* ── Photos ── */
+  $('btnPhoto').onclick = () => $('inPhoto').click();
+  $('btnGalerie').onclick = () => $('inGalerie').click();
+  $('inPhoto').onchange = e => ajouter(e.target.files, e.target);
+  $('inGalerie').onchange = e => ajouter(e.target.files, e.target);
+
+  async function ajouter(fichiers, input) {
+    erreur('');
+    for (const f of Array.from(fichiers || [])) {
+      if (pages.length >= MAX_PAGES) { erreur('Maximum ' + MAX_PAGES + ' pages par document.'); break; }
+      try { pages.push(await reduire(f)); }
+      catch (e) { erreur("Impossible de lire l'image " + f.name + '.'); }
+    }
+    input.value = '';
+    afficherPages();
+  }
+
+  function reduire(fichier) {
+    return new Promise((ok, ko) => {
+      const img = new Image();
+      const url = URL.createObjectURL(fichier);
+      img.onload = () => {
+        const r = Math.min(1, COTE_MAX / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        const dataUrl = c.toDataURL('image/jpeg', 0.85);
+        ok({ url: dataUrl, data: dataUrl.split(',')[1] });
+      };
+      img.onerror = ko;
+      img.src = url;
+    });
+  }
+
+  function afficherPages() {
+    const zone = $('vignettes');
+    zone.innerHTML = '';
+    pages.forEach((p, i) => {
+      const d = document.createElement('div');
+      d.className = 'vignette';
+      d.innerHTML = '<img alt="Page ' + (i + 1) + '"><span class="page">Page ' + (i + 1) + '</span>' +
+        '<div class="actions">' +
+        (i > 0 ? '<button aria-label="Avancer la page ' + (i + 1) + '">◀</button>' : '') +
+        '<button aria-label="Retirer la page ' + (i + 1) + '">✕</button></div>';
+      d.querySelector('img').src = p.url;
+      const btns = d.querySelectorAll('.actions button');
+      if (i > 0) btns[0].onclick = () => { [pages[i - 1], pages[i]] = [pages[i], pages[i - 1]]; afficherPages(); };
+      btns[btns.length - 1].onclick = () => { pages.splice(i, 1); afficherPages(); };
+      zone.appendChild(d);
+    });
+    $('vide').classList.toggle('cache', pages.length > 0);
+    $('btnAdapter').disabled = pages.length === 0;
+  }
+
+  /* ── Adaptation ── */
+  $('btnAdapter').onclick = () => {
+    erreur('');
+    montrer('ecranAttente');
+    const debut = Date.now();
+    minuteur = setInterval(() => { $('chrono').textContent = Math.round((Date.now() - debut) / 1000) + ' s'; }, 1000);
+
+    appeler({
+        action: 'adapter',
+        code: codeAcces,
+        images: pages.map(p => ({ mimeType: 'image/jpeg', data: p.data })),
+        options: { type: $('type').value, titre: $('titre').value.trim(), remarque: $('remarque').value.trim() }
+      })
+      .then(afficherResultat)
+      .catch(e => {
+        clearInterval(minuteur);
+        const msg = (e && e.message) || 'Erreur inconnue.';
+        if (msg.indexOf("Code d'accès") >= 0) { ecrireCode(''); erreur(msg); demarrer(); return; }
+        erreur(msg);
+        montrer('ecranForm');
+      });
+  };
+
+  function afficherResultat(r) {
+    clearInterval(minuteur);
+    dernierPdf = r;
+    $('resTitre').textContent = '✅ ' + r.titre;
+    $('lienPdf').href = r.pdfUrl;
+    $('lienDoc').href = r.docUrl;
+    $('btnWord').classList.toggle('cache', !r.docxBase64);
+
+    const v = r.verification;
+    if (v) {
+      const lignes = [['Exercices', v.exercices_original, v.exercices_adapte],
+                      ['Questions', v.questions_original, v.questions_adapte],
+                      ['Notions', v.notions_original, v.notions_adapte]]
+        .filter(l => l[1] || l[2]);
+      const ecart = lignes.some(l => Number(l[1]) !== Number(l[2]));
+      $('verif').innerHTML = '<div class="signal ' + (ecart ? 'alerte' : 'ok') + '"><b>' +
+        (ecart ? '⚠️ À vérifier : un écart est signalé' : '✔️ Contenu conservé') + '</b><ul>' +
+        lignes.map(l => '<li>' + l[0] + ' : ' + (l[1] || 0) + ' dans l\'original → ' + (l[2] || 0) + ' adaptés</li>').join('') +
+        '</ul>' + (v.commentaire ? '<p style="margin:6px 0 0">' + echapper(v.commentaire) + '</p>' : '') + '</div>';
+    } else { $('verif').innerHTML = ''; }
+
+    const ill = r.illisible || [];
+    $('illisible').innerHTML = ill.length
+      ? '<div class="signal info"><b>Passages illisibles signalés dans le document :</b><ul>' +
+        ill.map(x => '<li>' + echapper(x) + '</li>').join('') + '</ul></div>'
+      : '';
+    montrer('ecranResultat');
+  }
+
+  function telecharger(base64, nom, type) {
+    const octets = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([octets], { type: type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+  $('btnTelecharger').onclick = () => {
+    if (dernierPdf) telecharger(dernierPdf.pdfBase64, dernierPdf.pdfNom, 'application/pdf');
+  };
+  $('btnWord').onclick = () => {
+    if (dernierPdf && dernierPdf.docxBase64) {
+      telecharger(dernierPdf.docxBase64, dernierPdf.docxNom,
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    }
+  };
+
+  $('btnNouveau').onclick = () => {
+    pages = []; afficherPages();
+    $('titre').value = ''; $('remarque').value = ''; $('type').value = 'auto';
+    erreur(''); montrer('ecranForm'); window.scrollTo(0, 0);
+  };
+
+  function echapper(s) {
+    return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  demarrer();
+</script>
+</body>
+</html>
